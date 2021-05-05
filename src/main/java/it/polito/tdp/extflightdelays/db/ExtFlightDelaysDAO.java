@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import it.polito.tdp.extflightdelays.model.Adiacenza;
 import it.polito.tdp.extflightdelays.model.Airline;
 import it.polito.tdp.extflightdelays.model.Airport;
 import it.polito.tdp.extflightdelays.model.Flight;
@@ -80,6 +81,36 @@ public class ExtFlightDelaysDAO {
 						rs.getDouble("ELAPSED_TIME"), rs.getInt("DISTANCE"),
 						rs.getTimestamp("ARRIVAL_DATE").toLocalDateTime(), rs.getDouble("ARRIVAL_DELAY"));
 				result.add(flight);
+			}
+
+			conn.close();
+			return result;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Errore connessione al database");
+			throw new RuntimeException("Error Connection Database");
+		}
+	}
+	
+	public List<Adiacenza> creaArchi(int distanza_media){
+		String sql="SELECT origin_airport_id, destination_airport_id, distance, COUNT(*) AS peso "
+				+ "FROM flights "
+				+ "WHERE origin_airport_id <> destination_airport_id "
+				+ "GROUP BY origin_airport_id, destination_airport_id ";
+		
+		List<Adiacenza> result = new LinkedList<>();
+
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet rs = st.executeQuery();
+
+			while (rs.next()) {
+				Adiacenza a = new Adiacenza(rs.getInt("origin_airport_id"), rs.getInt("destination_airport_id"), rs.getInt("distance"), rs.getInt("peso"));
+				if(a.getDistanza() >= distanza_media) {
+					result.add(a);
+				}
 			}
 
 			conn.close();
